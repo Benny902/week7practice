@@ -33,8 +33,7 @@ jobs:
       - name: Healthcheck and get logs
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.VM_HOST }} "
-            sudo docker-compose ps
-            sudo docker-compose logs --tail=50
+            sudo docker ps
           " > remote_logs.txt
 
       - name: Upload VM logs
