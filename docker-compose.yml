@@ -19,10 +19,14 @@ services:
       - mongo
     environment:
       - MONGO_URL=mongodb://mongo:27017/microblog
-    volumes:
-      - ./backend:/app
     networks:
       - microblog-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
 
   frontend:
     build: ./frontend
@@ -31,8 +35,6 @@ services:
       - "4000:4000"
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
     networks:
       - microblog-net
 
