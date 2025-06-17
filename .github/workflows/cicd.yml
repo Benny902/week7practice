@@ -1,10 +1,11 @@
 name: Microblog CICD
 
 on:
-  push: # Runs on every push
-      tags:
-      - 'v*.*.*'
-  pull_request: # Runs on pull request
+  # currently deploying to azure, so this cicd is irrelevant.
+  # push: # Runs on every push
+  #     tags:
+  #     - 'v*.*.*'
+  # pull_request: # Runs on pull request
   workflow_dispatch: # Can be run manually
 
 jobs:
