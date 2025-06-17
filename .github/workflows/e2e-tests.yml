@@ -1,0 +1,68 @@
+name: E2E Tests
+
+on:
+  workflow_call:
+    outputs:
+      e2e_status:
+        description: "Result of E2E tests"
+        value: ${{ jobs.e2e.outputs.e2e_status }}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    outputs:
+      e2e_status: ${{ steps.e2e_status_step.outcome }}
+    services:
+      mongo:
+        image: mongo:6
+        ports: [27017:27017]
+        options: >-
+          --health-cmd "mongo --eval 'db.runCommand({ ping: 1 })'" 
+          --health-interval 10s --health-timeout 5s --health-retries 3
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and Start Stack
+        run: docker-compose up -d --build
+
+      - name: Wait for backend to be healthy
+        run: |
+          for i in {1..10}; do
+            if docker-compose ps | grep backend | grep healthy; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            echo "Waiting for backend to be healthy..."
+            sleep 5
+          done
+          echo "Backend is not healthy after waiting"
+          docker-compose logs > compose_logs.txt
+          exit 1
+
+      - name: Run API E2E Tests
+        id: e2e_status_step
+        run: |
+          docker-compose exec backend npm test | tee backend-test-results.log || (
+            docker-compose logs > compose_logs.txt;
+            exit 1
+          )
+
+      - name: Upload backend test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend-test-results.log
+
+      - name: Upload Compose Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs
+          path: compose_logs.txt
+
+      - name: Shutdown
+        if: always()
+        run: docker-compose down --volumes

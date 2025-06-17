@@ -2,7 +2,7 @@
 # Benny &amp; Avichai - week 6 collaboration
 
 
-### this week 6 is build on top of week 5:
+### this week 7 is built on top of week 6 which is build on top of week 5:
 
 <details>
 <summary> # week5-ci-cd </summary>
@@ -415,7 +415,9 @@ For a production pipeline, we would add test coverage checks, separate deploys f
 </details>
 <hr>
 
-# Week 6 – Summary Task: Docker & Containerization
+<details>
+<summary> # Week 6 – Summary Task: Docker & Containerization </summary>
+
 
 ## Overview
 
@@ -647,3 +649,312 @@ jobs:
       build_status: ${{ needs.frontend-docker-build.result }}
     secrets: inherit
 ```
+
+</details>
+
+<hr>
+
+
+# week 7 - Docker Compose & Azure + VM:
+
+## Task 1 – Create and Run Multi-Container App with Docker Compose:
+Already done in previous week.
+
+## Task 2 – Volume Mounting and Persistent Data
+Already done in previous week.
+
+## Task 3 – Healthchecks and Logging
+Already done in previous week in Dockerfile, but also added in `docker-compose.yml` now:
+```yml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: on-failure
+```
+
+## Task 4 – Docker Compose + CI Integration
+in main `cicd.yml` file:
+```yml
+  e2e-tests:
+    needs: [backend-docker-build, frontend-docker-build]
+    uses: ./.github/workflows/e2e-tests.yml
+```
+
+the `e2e-tests.yml` file:
+```yml
+name: E2E Tests
+
+on:
+  workflow_call:
+    outputs:
+      e2e_status:
+        description: "Result of E2E tests"
+        value: ${{ jobs.e2e.outputs.e2e_status }}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    outputs:
+      e2e_status: ${{ steps.e2e_status_step.outcome }}
+    services:
+      mongo:
+        image: mongo:6
+        ports: [27017:27017]
+        options: >-
+          --health-cmd "mongo --eval 'db.runCommand({ ping: 1 })'" 
+          --health-interval 10s --health-timeout 5s --health-retries 3
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and Start Stack
+        run: docker-compose up -d --build
+
+      - name: Wait for backend to be healthy
+        run: |
+          for i in {1..10}; do
+            if docker-compose ps | grep backend | grep healthy; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            echo "Waiting for backend to be healthy..."
+            sleep 5
+          done
+          echo "Backend is not healthy after waiting"
+          docker-compose logs > compose_logs.txt
+          exit 1
+
+      - name: Run API E2E Tests
+        id: e2e_status_step
+        run: |
+          docker-compose exec backend npm test | tee backend-test-results.log || (
+            docker-compose logs > compose_logs.txt;
+            exit 1
+          )
+
+      - name: Upload backend test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend-test-results.log
+
+      - name: Upload Compose Logs on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-logs
+          path: compose_logs.txt
+
+      - name: Shutdown
+        if: always()
+        run: docker-compose down --volumes
+```
+
+## Task 5 – Lightweight Base Images and Optimization
+Already done in previous week.
+
+## Task 6 – Azure VM Setup and Manual Deployment
+this is similar to week3:
+
+### Generate the SSH key:
+```bash
+ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa
+```
+and then presse 'enter' to accept the file location.  
+and again press 'enter' two times to skip setting passphrase.
+
+### Script to create an Azure Linux VM and Add this public key to the VM
+```bash
+#!/bin/bash
+
+# Set variables
+RESOURCE_GROUP="bennyVMeastus2"
+LOCATION="eastus2" # cheapest for Standard_B1ls as i saw in pricing
+VM_NAME="myvm"
+ADMIN_USER="azureuser"
+
+# Create resource group
+az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+
+# Create VM # Standard_B1ls is the cheapest.
+az vm create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$VM_NAME" \
+  --image Ubuntu2204 \
+  --size Standard_B1ls \
+  --admin-username "$ADMIN_USER" \
+  --authentication-type ssh \
+  --generate-ssh-keys
+
+# Add the public key to the VM (from ~/.ssh/id_rsa.pub)
+az vm user update \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$VM_NAME" \
+  --username "$ADMIN_USER" \
+  --ssh-key-value "$(cat ~/.ssh/id_rsa.pub)"
+
+# Open SSH port 22 (if not already open)
+az vm open-port --port 22 --resource-group "$RESOURCE_GROUP" --name "$VM_NAME"
+```
+
+### Run the Script:
+```bash
+chmod +x create_vm_and_add_public_key.sh
+./create_vm_and_add_public_key.sh
+```
+
+### Get the public IP of the VM with this command:
+```bash
+az vm show \
+  --resource-group bennyVMeastus2 \
+  --name myvm \
+  -d \
+  --query publicIps \
+  -o tsv
+```
+
+### Connect to the Azure VM without password:
+```bash
+ssh azureuser@<vm-public-ip>
+```
+
+### Install Docker & Docker Compose
+```bash
+# Update package info
+sudo apt update
+
+# Install Docker
+sudo apt install -y docker.io
+
+# Enable and start Docker
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Install Docker Compose
+sudo apt install -y docker-compose
+```
+
+
+### Copy The Project Files to the VM
+(go back to local machine with `exit`) : On local machine, in the project folder
+```bash
+scp -i ~/.ssh/id_rsa -r ./* azureuser@<vm-public-ip>:/home/azureuser/week7practice
+```
+
+
+### Build and Run the App on the VM
+connect to the vm again ( ssh azureuser@<vm-public-ip> ) and then:
+```bash
+cd ~/week7practice
+sudo docker-compose up -d --build
+```
+
+### This failed in my case i was because i was using 'cheap' VM with only 344mb, therfore i added `Swap`:
+- Swap gives you virtual memory using disk. It’s not as fast as RAM, but prevents OOM crashes.
+- Run these commands on the VM:
+```bash
+# Create a 1GB swap file
+sudo fallocate -l 1G /swapfile
+sudo chmod 600 /swapfile
+
+# Set up the swap space
+sudo mkswap /swapfile
+
+# Enable swap
+sudo swapon /swapfile
+
+# Make it persistent (so it works after reboot)
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# Check result # should see 'Swap:   1.0G   0B   1.0G'
+free -h
+```
+
+### Expose Public Ports (Backend: 3000, Frontend: 4000)
+- go back to our local (`exit`)
+```bash
+az vm open-port --port 3000 --resource-group bennyVMeastus2 --name myvm --priority 902
+az vm open-port --port 4000 --resource-group bennyVMeastus2 --name myvm --priority 903
+```
+- when tried without `--priority` i had conflict.
+- Each rule must have a unique priority (between 100 and 4096, lower number = higher priority).
+
+### Verify Application is Running
+
+- Backend: http://<vm-public-ip>:3000   
+
+- Frontend: http://<vm-public-ip>:4000   
+
+- To check logs or health:
+```bash
+sudo docker ps
+sudo docker-compose logs --tail=50
+```
+
+
+## Task 7 – Deploy to Azure VM via CI/CD (GitHub Actions)
+
+### we start by Adding repository secrets in GitHub:
+(Settings > Secrets and variables > Actions):  
+- VM_HOST → azureuser@<vm-public-ip>
+- VM_SSH_KEY → Contents of the private ~/.ssh/id_rsa file (not the .pub!)
+
+
+## Create the Workflow File
+`deploy-vm.yml`:
+```yml
+name: Deploy to Azure VM
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-vm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Write SSH key
+        run: |
+          echo "${{ secrets.VM_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Copy files to VM with rsync
+        run: |
+          rsync -az --delete --exclude='.git' --exclude='node_modules' -e "ssh -i key.pem -o StrictHostKeyChecking=no" ./ ${{ secrets.VM_HOST }}:/home/azureuser/week7practice
+
+      - name: Deploy with docker-compose
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.VM_HOST }} "
+            cd /home/azureuser/week7practice &&
+            sudo docker-compose down --remove-orphans &&
+            sudo docker-compose up -d --build
+          "
+
+      - name: Healthcheck and get logs
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.VM_HOST }} "
+            sudo docker-compose ps
+            sudo docker-compose logs --tail=50
+          " > remote_logs.txt
+
+      - name: Upload VM logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: remote-logs
+          path: remote_logs.txt
+
+      - name: Cleanup key
+        run: rm key.pem
+```
+
+---
+

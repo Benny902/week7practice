@@ -48,3 +48,7 @@ jobs:
       test_status: ${{ needs.frontend-test.result }}
       build_status: ${{ needs.frontend-docker-build.result }}
     secrets: inherit
+
+  e2e-tests:
+    needs: [backend-docker-build, frontend-docker-build]
+    uses: ./.github/workflows/e2e-tests.yml
