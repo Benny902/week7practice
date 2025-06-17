@@ -1,0 +1,107 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  form {
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  textarea {
+    padding: 1rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+  }
+  
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: 0.25rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background-color: #00a3cc;
+    transition: background 0.3s ease;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  #blogs-list {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .blog {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1rem;
+    word-wrap: break-word;
+  }
+  
+  .edit-btn {
+    background: #ffc107;
+    color: #fff;
+    margin-right: 0.5rem;
+  }
+  
+  .delete-btn {
+    background: #dc3545;
+    color: #fff;
+  }
+  
+  .blog-text {
+    margin-bottom: 0.5rem;
+    white-space: pre-wrap;
+    font-family: monospace; /* Match textarea font */
+    font-size: 1rem;
+    padding: 0.5rem;
+  }   
+  
+  .save-btn {
+    background: #28a745;
+    color: #fff;
+    margin-right: 0.5rem;
+  }
+  
+  .cancel-btn {
+    background: #6c757d;
+    color: #fff;
+  }
+  
+  .timestamp {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.25rem;
+  }
+  

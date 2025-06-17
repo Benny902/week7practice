@@ -1,0 +1,57 @@
+name: Backend Test
+
+on:
+  workflow_dispatch: # Can be run manually
+  workflow_call:
+    outputs:
+      job_start_time:
+        description: "Start timestamp"
+        value: ${{ jobs.test.outputs.job_start_time }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+    outputs:
+      job_start_time: ${{ steps.set_time.outputs.job_start_time }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set_time
+        run: echo "job_start_time=$(date +%s)" >> $GITHUB_OUTPUT
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }} # Use the Node.js version from the matrix
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          if [ "${{ matrix.node-version }}" < "18" ] ; then
+            npm install
+          else
+            npm ci
+          fi
+        working-directory: backend
+
+      - name: Install ESLint
+        run: npm install -g eslint
+
+      - name: Run ESLint
+        run: npx eslint .
+        working-directory: backend
+
+      - name: Run backend tests
+        run: |
+          npm test | tee test-results.log
+          echo "Build finished successfully at $(date)" >> test-results.log
+        working-directory: backend
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results-node${{ matrix.node-version }}
+          path: backend/test-results.log

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - microblog-net
+
+  backend:
+    build: ./backend
+    image: myapp-backend:${APP_VERSION:-latest}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/microblog
+    volumes:
+      - ./backend:/app
+    networks:
+      - microblog-net
+
+  frontend:
+    build: ./frontend
+    image: myapp-frontend:${APP_VERSION:-latest}
+    ports:
+      - "4000:4000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+    networks:
+      - microblog-net
+
+volumes:
+  mongo-data:
+
+networks:
+  microblog-net:
+    driver: bridge

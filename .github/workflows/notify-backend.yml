@@ -1,0 +1,39 @@
+name: Notify
+
+on:
+  workflow_call:
+    inputs:
+      job_start_time:
+        required: true
+        type: string
+      test_status:
+        required: true
+        type: string
+      build_status:
+        required: true
+        type: string
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate job duration
+        run: |
+          echo "JOB_DURATION=$(( $(date +%s) - ${{ inputs.job_start_time }} ))" >> $GITHUB_ENV
+
+      - name: Notify Slack (Backend)
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "*Microblog Backend Pipeline*\n\n*Test:* `${{ inputs.test_status }}`\n*Build & Push:* `${{ inputs.build_status }}`\n\n*Workflow:* ${{ github.workflow }}\n*Run:* #${{ github.run_number }}\n*Repo:* ${{ github.repository }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Discord (Backend)
+        run: |
+          curl -H "Content-Type: application/json" \
+               -X POST \
+               -d "{\"content\": \"**Microblog Backend Pipeline**\nTest: \`${{ inputs.test_status }}\`\nBuild & Push: \`${{ inputs.build_status }}\`\nWorkflow: ${{ github.workflow }}\nRun: #${{ github.run_number }}\nRepo: ${{ github.repository }}\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}

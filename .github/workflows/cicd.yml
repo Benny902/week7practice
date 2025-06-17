@@ -1,0 +1,50 @@
+name: Microblog CICD
+
+on:
+  push: # Runs on every push
+      tags:
+      - 'v*.*.*'
+  pull_request: # Runs on pull request
+  workflow_dispatch: # Can be run manually
+
+jobs:
+
+  backend-test:
+    uses: ./.github/workflows/backend-test.yml
+
+  backend-docker-build:
+    needs: backend-test
+    uses: ./.github/workflows/docker-build-backend.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit
+
+  backend-notify:
+    needs: [backend-test, backend-docker-build]
+    if: always()
+    uses: ./.github/workflows/notify-backend.yml
+    with:
+      job_start_time: ${{ needs.backend-test.outputs.job_start_time }}
+      test_status: ${{ needs.backend-test.result }}
+      build_status: ${{ needs.backend-docker-build.result }}
+    secrets: inherit
+
+  frontend-test:
+    uses: ./.github/workflows/frontend-test.yml
+
+  frontend-docker-build:
+    needs: frontend-test
+    uses: ./.github/workflows/docker-build-frontend.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit
+
+  frontend-notify:
+    needs: [frontend-test, frontend-docker-build]
+    if: always()
+    uses: ./.github/workflows/notify-frontend.yml
+    with:
+      job_start_time: ${{ needs.frontend-test.outputs.job_start_time }}
+      test_status: ${{ needs.frontend-test.result }}
+      build_status: ${{ needs.frontend-docker-build.result }}
+    secrets: inherit
