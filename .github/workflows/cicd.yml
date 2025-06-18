@@ -11,7 +11,7 @@ jobs:
 
   deploy-to-azure-vm:
     needs: [backend-test, frontend-test] # add dependencies as needed
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy-vm.yml
     secrets: inherit
 
   backend-test:
