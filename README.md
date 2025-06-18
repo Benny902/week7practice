@@ -701,20 +701,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       e2e_status: ${{ steps.e2e_status_step.outcome }}
-    services:
-      mongo:
-        image: mongo:6
-        ports: [27017:27017]
-        options: >-
-          --health-cmd "mongo --eval 'db.runCommand({ ping: 1 })'" 
-          --health-interval 10s --health-timeout 5s --health-retries 3
 
     steps:
       - uses: actions/checkout@v3
       - uses: docker/setup-buildx-action@v3
 
       - name: Build and Start Stack
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
 
       - name: Wait for backend to be healthy
         run: |
