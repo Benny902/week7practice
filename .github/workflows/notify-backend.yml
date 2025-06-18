@@ -31,9 +31,9 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Notify Discord (Backend)
-        run: |
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"**Microblog Backend Pipeline**\nTest: \`${{ inputs.test_status }}\`\nBuild & Push: \`${{ inputs.build_status }}\`\nWorkflow: ${{ github.workflow }}\nRun: #${{ github.run_number }}\nRepo: ${{ github.repository }}\"}" \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
+      # - name: Notify Discord (Backend)
+      #   run: |
+      #     curl -H "Content-Type: application/json" \
+      #          -X POST \
+      #          -d "{\"content\": \"**Microblog Backend Pipeline**\nTest: \`${{ inputs.test_status }}\`\nBuild & Push: \`${{ inputs.build_status }}\`\nWorkflow: ${{ github.workflow }}\nRun: #${{ github.run_number }}\nRepo: ${{ github.repository }}\"}" \
+      #          ${{ secrets.DISCORD_WEBHOOK_URL }}
