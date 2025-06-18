@@ -657,6 +657,9 @@ jobs:
 
 # week 7 - Docker Compose & Azure + VM:
 
+## Flowchart:  
+![alt text](images/week7-architecture.png) 
+
 ## Task 1 – Create and Run Multi-Container App with Docker Compose:
 Already done in previous week.
 
