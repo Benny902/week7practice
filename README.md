@@ -1,5 +1,5 @@
 
-# Benny &amp; Avichai - week 6 collaboration
+# Benny week 7 daily
 
 
 ### this week 7 is built on top of week 6 which is build on top of week 5:
