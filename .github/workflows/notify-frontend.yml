@@ -31,17 +31,17 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Notify Discord (Frontend)
-        run: |
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"content\": \"**Microblog Frontend Pipeline**\nTest: \`${{ inputs.test_status }}\`\nBuild & Push: \`${{ inputs.build_status }}\`\nWorkflow: ${{ github.workflow }}\nRun: #${{ github.run_number }}\nRepo: ${{ github.repository }}\"}" \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
+      # - name: Notify Discord (Frontend)
+      #   run: |
+      #     curl -H "Content-Type: application/json" \
+      #          -X POST \
+      #          -d "{\"content\": \"**Microblog Frontend Pipeline**\nTest: \`${{ inputs.test_status }}\`\nBuild & Push: \`${{ inputs.build_status }}\`\nWorkflow: ${{ github.workflow }}\nRun: #${{ github.run_number }}\nRepo: ${{ github.repository }}\"}" \
+      #          ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: Mock Deploy Frontend (Vercel)
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        run: echo "Frontend automatically deployed by Vercel"
+      # - name: Mock Deploy Frontend (Vercel)
+      #   if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      #   run: echo "Frontend automatically deployed by Vercel"
 
-      - name: Echo job completion
-        if: success()
-        run: echo "Frontend job for Node.js completed successfully!"
+      # - name: Echo job completion
+      #   if: success()
+      #   run: echo "Frontend job for Node.js completed successfully!"
