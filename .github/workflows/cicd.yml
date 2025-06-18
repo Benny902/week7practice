@@ -1,24 +1,28 @@
 name: Microblog CICD
 
 on:
-  # currently deploying to azure, so this cicd is irrelevant.
-  # push: # Runs on every push
-  #     tags:
-  #     - 'v*.*.*'
-  # pull_request: # Runs on pull request
+  push: # Runs on every push
+      tags:
+      - 'v*.*.*'
+  pull_request: # Runs on pull request
   workflow_dispatch: # Can be run manually
 
 jobs:
 
+  deploy-to-azure-vm:
+    needs: [backend-test, frontend-test] # add dependencies as needed
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+
   backend-test:
     uses: ./.github/workflows/backend-test.yml
 
-  backend-docker-build:
-    needs: backend-test
-    uses: ./.github/workflows/docker-build-backend.yml
-    with:
-      tag: ${{ github.ref_name }}
-    secrets: inherit
+  # backend-docker-build: # now its deployed in azure vm automaticaly and builds there, so no need for docker hub images.
+  #   needs: backend-test
+  #   uses: ./.github/workflows/docker-build-backend.yml
+  #   with:
+  #     tag: ${{ github.ref_name }}
+  #   secrets: inherit
 
   backend-notify:
     needs: [backend-test, backend-docker-build]
@@ -33,12 +37,12 @@ jobs:
   frontend-test:
     uses: ./.github/workflows/frontend-test.yml
 
-  frontend-docker-build:
-    needs: frontend-test
-    uses: ./.github/workflows/docker-build-frontend.yml
-    with:
-      tag: ${{ github.ref_name }}
-    secrets: inherit
+  # frontend-docker-build: # now its deployed in azure vm automaticaly and builds there, so no need for docker hub images.
+  #   needs: frontend-test
+  #   uses: ./.github/workflows/docker-build-frontend.yml
+  #   with:
+  #     tag: ${{ github.ref_name }}
+  #   secrets: inherit
 
   frontend-notify:
     needs: [frontend-test, frontend-docker-build]
