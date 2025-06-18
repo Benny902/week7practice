@@ -1,6 +1,9 @@
 # Use a lightweight Node.js image
 FROM node:18-alpine
 
+# Install curl
+RUN apk add --no-cache curl
+
 # Set working directory
 WORKDIR /app
 
