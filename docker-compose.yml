@@ -22,7 +22,7 @@ services:
     networks:
       - microblog-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://172.200.150.98:3000"]
       interval: 30s
       timeout: 5s
       retries: 3
